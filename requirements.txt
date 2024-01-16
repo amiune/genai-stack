@@ -1,15 +1,10 @@
-openai==0.28.1
 python-dotenv
 wikipedia
 tiktoken
-neo4j
+weaviate-client==4.4b1
 streamlit
 sentence_transformers==2.2.2
 Pillow
 fastapi
-PyPDF2
 torch==2.0.1
 pydantic
-uvicorn
-sse-starlette
-boto3
