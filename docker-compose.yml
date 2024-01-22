@@ -3,7 +3,7 @@ services:
   llm: &llm
     image: ollama/ollama:latest
     profiles: ["linux"]
-    # exposing ports for local dev, but we should NOT do this in prod
+    # DON'T export this port to the host, else the healthcheck will fail -> though we can need it for debugging
     ports:
       - 11434:11434
     networks:
@@ -20,7 +20,8 @@ services:
               count: all
               capabilities: [gpu]
     healthcheck:
-      test: ["CMD-SHELL", "curl", "-f", "http://localhost:11434/"]
+      # test: ["CMD-SHELL", "curl", "-f", "http://host.docker.internal:11434/"]
+      test: ["CMD-SHELL", "curl", "-f", "http://llm-gpu:11434/"]
       interval: 30s
       timeout: 60s
       retries: 5
@@ -42,7 +43,7 @@ services:
     networks:
       - net
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready", "--host", "localhost"]
+      test: ["CMD-SHELL", "pg_isready", "--host", "localhost",  "-d", "${POSTGRES_DB}", "-U", "${POSTGRES_USER}"]
       interval: 30s
       timeout: 60s
       retries: 5
@@ -55,6 +56,7 @@ services:
       dockerfile: pull_model.Dockerfile
     restart: on-failure
     environment:
+      # - OLLAMA_BASE_URL=${OLLAMA_BASE_URL-http://host.docker.internal:11434} 
       - OLLAMA_BASE_URL=${OLLAMA_BASE_URL-http://llm-gpu:11434}  ## This is now working but we'll have to change the llm/llm-gpu depending the HW
       - LLM=${LLM-llama2}
     depends_on:
@@ -65,29 +67,31 @@ services:
     tty: true
 
 
-  # bot:
-  #   build:
-  #     context: .
-  #     dockerfile: bot.Dockerfile
-  #   volumes:
-  #     - $PWD/embedding_model:/embedding_model
-  #   environment:
-  #     - OLLAMA_BASE_URL=${OLLAMA_BASE_URL-http://host.docker.internal:11434}
-  #     - LLM=${LLM-llama2}
-  #     - EMBEDDING_MODEL=${EMBEDDING_MODEL-sentence_transformer}
-  #   networks:
-  #     - net
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
-  #     pull-model:
-  #       condition: service_completed_successfully
-  #   x-develop:
-  #     watch:
-  #       - action: rebuild
-  #         path: .
-  #   ports:
-  #     - 8501:8501
+  bot:
+    build:
+      context: .
+      dockerfile: bot.Dockerfile
+    volumes:
+      - $PWD/embedding_model:/embedding_model
+    environment:
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL-http://host.docker.internal:11434}
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL-http://llm-gpu:11434}
+      - LLM=${LLM-llama2}
+      - EMBEDDING_MODEL=${EMBEDDING_MODEL-sentence_transformer}
+    networks:
+      - net
+    depends_on:
+      postgres:
+        condition: service_started
+        # condition: service_healthy
+      # pull-model:
+      #   condition: service_completed_successfully
+    x-develop:
+      watch:
+        - action: rebuild
+          path: .
+    ports:
+      - 8501:8501
 
 
 networks:
