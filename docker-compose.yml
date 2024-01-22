@@ -3,6 +3,9 @@ services:
   llm: &llm
     image: ollama/ollama:latest
     profiles: ["linux"]
+    # exposing ports for local dev, but we should NOT do this in prod
+    ports:
+      - 11434:11434
     networks:
       - net
 
@@ -16,80 +19,79 @@ services:
             - driver: nvidia
               count: all
               capabilities: [gpu]
+    healthcheck:
+      test: ["CMD-SHELL", "curl", "-f", "http://localhost:11434/"]
+      interval: 30s
+      timeout: 60s
+      retries: 5
+      start_period: 80s  
+
+
+  postgres:
+    image: ankane/pgvector
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_HOST_AUTH_METHOD: "trust"
+    ports:
+      - 5432:5432
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - ./db_migrations/001_init.sql:/docker-entrypoint-initdb.d/init.sql  # this is not being run correctly
+    networks:
+      - net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready", "--host", "localhost"]
+      interval: 30s
+      timeout: 60s
+      retries: 5
+      start_period: 80s  
 
   pull-model:
     image: genai-stack/pull-model:latest
     build:
       context: .
       dockerfile: pull_model.Dockerfile
+    restart: on-failure
     environment:
-      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL-http://host.docker.internal:11434}
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL-http://llm-gpu:11434}  ## This is now working but we'll have to change the llm/llm-gpu depending the HW
       - LLM=${LLM-llama2}
+    depends_on:
+      llm-gpu:
+        condition: service_started
     networks:
       - net
     tty: true
 
-  weaviate:
-    command:
-    - --host
-    - 0.0.0.0
-    - --port
-    - '8080'
-    - --scheme
-    - http
-    image: semitechnologies/weaviate:1.23.0
-    ports:
-    - 8080:8080
-    - 50051:50051
-    volumes:
-    - weaviate_data:/var/lib/weaviate
-    restart: on-failure:0
-    env_file:
-      - .env
-    environment:
-      QUERY_DEFAULTS_LIMIT: 25
-      AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: 'true'
-      PERSISTENCE_DATA_PATH: '/var/lib/weaviate'
-      DEFAULT_VECTORIZER_MODULE: 'none'
-      ENABLE_MODULES: ''
-      CLUSTER_HOSTNAME: 'node1'
-      # activate or deactivate depending on the available HW
-      # ENABLE_CUDA: 0 # set to 1 to enable
-      # NVIDIA_VISIBLE_DEVICES: all # enable if running with CUDA
-      # so just because we might need a model later in weaviate:
-    networks:
-      - net      
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/v1/meta"]
-      interval: 1m
-      timeout: 10s
-      retries: 5
-      start_period: 30s
-      start_interval: 5s
 
-  bot:
-    build:
-      context: .
-      dockerfile: bot.Dockerfile
-    volumes:
-      - $PWD/embedding_model:/embedding_model
-    environment:
-      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL-http://host.docker.internal:11434}
-      - LLM=${LLM-llama2}
-      - EMBEDDING_MODEL=${EMBEDDING_MODEL-sentence_transformer}
-    networks:
-      - net
-    depends_on:
-      #database:
-        #condition: service_healthy
-      pull-model:
-        condition: service_completed_successfully
-    x-develop:
-      watch:
-        - action: rebuild
-          path: .
-    ports:
-      - 8501:8501
+  # bot:
+  #   build:
+  #     context: .
+  #     dockerfile: bot.Dockerfile
+  #   volumes:
+  #     - $PWD/embedding_model:/embedding_model
+  #   environment:
+  #     - OLLAMA_BASE_URL=${OLLAMA_BASE_URL-http://host.docker.internal:11434}
+  #     - LLM=${LLM-llama2}
+  #     - EMBEDDING_MODEL=${EMBEDDING_MODEL-sentence_transformer}
+  #   networks:
+  #     - net
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #     pull-model:
+  #       condition: service_completed_successfully
+  #   x-develop:
+  #     watch:
+  #       - action: rebuild
+  #         path: .
+  #   ports:
+  #     - 8501:8501
+
 
 networks:
   net:
+
+volumes:
+  pg_data:
