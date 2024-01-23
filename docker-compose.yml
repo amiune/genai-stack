@@ -57,7 +57,7 @@ services:
     restart: on-failure
     environment:
       # - OLLAMA_BASE_URL=${OLLAMA_BASE_URL-http://host.docker.internal:11434} 
-      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL-http://llm-gpu:11434}  ## This is now working but we'll have to change the llm/llm-gpu depending the HW
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL-http://llm-gpu:11434}  ## This is now working but we'll have to change the [llm|llm-gpu] depending the HW
       - LLM=${LLM-llama2}
     depends_on:
       llm-gpu:
@@ -81,9 +81,11 @@ services:
     networks:
       - net
     depends_on:
-      postgres:
-        condition: service_started
+      - postgres
+      # postgres:
+      #   condition: service_started
         # condition: service_healthy
+      - pull-model
       # pull-model:
       #   condition: service_completed_successfully
     x-develop:
