@@ -27,9 +27,9 @@ services:
       retries: 5
       start_period: 80s  
 
-
   postgres:
-    image: ankane/pgvector
+    # image: ankane/pgvector
+    image: paradedb/paradedb:latest  # this image contains more things, including pgvector, pg_sparse and pg_bm25
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -38,8 +38,8 @@ services:
     ports:
       - 5432:5432
     volumes:
-      - pg_data:/var/lib/postgresql/data
-      - ./db_migrations/001_init.sql:/docker-entrypoint-initdb.d/init.sql  # this is not being run correctly
+      - db_data:/var/lib/postgresql/data
+      # - ./db_migrations/001_init.sql:/docker-entrypoint-initdb.d/init.sql  # this is not being run correctly
     networks:
       - net
     healthcheck:
@@ -100,4 +100,4 @@ networks:
   net:
 
 volumes:
-  pg_data:
+  db_data:
