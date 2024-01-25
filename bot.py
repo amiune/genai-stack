@@ -1,5 +1,7 @@
 import os
 import streamlit as st
+import weaviate
+import weaviate.classes as wvc
 
 from langchain.embeddings import (
     OllamaEmbeddings,
@@ -11,6 +13,43 @@ from langchain.prompts.chat import (
     SystemMessagePromptTemplate,
     HumanMessagePromptTemplate,
 )
+
+client = weaviate.connect_to_local()
+
+questions = client.collections.create(
+    "Question",
+    vectorizer_config=wvc.config.Configure.Vectorizer.none(),
+    vector_index_config=wvc.config.Configure.VectorIndex.hnsw(
+        distance_metric=wvc.config.VectorDistance.COSINE
+    ),
+)
+
+question1_uuid = questions.data.insert(
+            properties={
+                "question": "Como esta el clima hoy?",
+                "answer": "Muy lindo",
+            },
+            vector=[0,0,0]
+        )
+
+
+question2_uuid = questions.data.insert(
+            properties={
+                "question": "De que color es el pasto?",
+                "answer": "verde",
+            },
+            vector=[1,1,1]
+        )
+
+response = questions.query.near_vector(
+    near_vector=[0,0,1], # your query vector goes here
+    limit=2
+)
+
+st.chat_message("assistant").write("iniciando")
+st.chat_message("assistant").write(response)
+
+client.close()
 
 ollama_base_url = "http://host.docker.internal:11434"
 embedding_model_name = "ollama"
