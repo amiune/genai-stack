@@ -14,15 +14,27 @@ from langchain.prompts.chat import (
     HumanMessagePromptTemplate,
 )
 
-client = weaviate.connect_to_local()
+#client = weaviate.connect_to_local()
 
-questions = client.collections.create(
-    "Question",
-    vectorizer_config=wvc.config.Configure.Vectorizer.none(),
-    vector_index_config=wvc.config.Configure.VectorIndex.hnsw(
-        distance_metric=wvc.config.VectorDistance.COSINE
-    ),
+client = weaviate.connect_to_custom(
+    http_host="weaviate",
+    http_port=8080,
+    http_secure=False,
+    grpc_host="weaviate",
+    grpc_port=50051,
+    grpc_secure=False,
 )
+
+if client.collections.exists("Question"):
+    questions = client.collections.get("Question")
+else:
+    questions = client.collections.create(
+        "Question",
+        vectorizer_config=wvc.config.Configure.Vectorizer.none(),
+        vector_index_config=wvc.config.Configure.VectorIndex.hnsw(
+            distance_metric=wvc.config.VectorDistance.COSINE
+        ),
+    )
 
 question1_uuid = questions.data.insert(
             properties={
@@ -42,12 +54,14 @@ question2_uuid = questions.data.insert(
         )
 
 response = questions.query.near_vector(
-    near_vector=[0,0,1], # your query vector goes here
+    near_vector=[0,0,0], # your query vector goes here,
+    #certainty=1, # fime the same vector
     limit=2
 )
 
 st.chat_message("assistant").write("iniciando")
-st.chat_message("assistant").write(response)
+st.chat_message("assistant").write(response.objects[0].properties)
+st.chat_message("assistant").write(response.objects[1].properties)
 
 client.close()
 

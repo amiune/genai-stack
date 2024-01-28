@@ -1,3 +1,5 @@
+version: '3.4'
+
 services:
 
   llm: &llm
@@ -37,7 +39,7 @@ services:
     - '8080'
     - --scheme
     - http
-    image: semitechnologies/weaviate:1.23.0
+    image: semitechnologies/weaviate:1.23.5
     ports:
     - 8080:8080
     - 50051:50051
@@ -49,16 +51,12 @@ services:
       AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: 'true'
       PERSISTENCE_DATA_PATH: '/var/lib/weaviate'
       DEFAULT_VECTORIZER_MODULE: 'none'
-      ENABLE_MODULES: ''
       CLUSTER_HOSTNAME: 'node1'
-      # activate or deactivate depending on the available HW
-      # ENABLE_CUDA: 0 # set to 1 to enable
-      # NVIDIA_VISIBLE_DEVICES: all # enable if running with CUDA
-      # so just because we might need a model later in weaviate:
     networks:
       - net      
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/v1/meta"]
+      #test: wget --no-verbose --tries=3 --spider http://weaviate:8080/v1/.well-known/ready || exit 1
       interval: 1m
       timeout: 10s
       retries: 5
@@ -77,7 +75,7 @@ services:
     networks:
       - net
     depends_on:
-      #database:
+      #weaviate:
         #condition: service_healthy
       pull-model:
         condition: service_completed_successfully

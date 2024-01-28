@@ -1,7 +1,7 @@
 python-dotenv
 wikipedia
 tiktoken
-weaviate-client==4.4b1
+weaviate-client==4.4b9
 streamlit
 sentence_transformers==2.2.2
 Pillow
