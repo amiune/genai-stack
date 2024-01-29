@@ -1,5 +1,6 @@
 import os
 import streamlit as st
+from streamlit_chat import message
 
 from langchain.embeddings import (
     OllamaEmbeddings,
@@ -12,13 +13,13 @@ from langchain.prompts.chat import (
     HumanMessagePromptTemplate,
 )
 
-ollama_base_url = "http://host.docker.internal:11434"
+ollama_base_url = "http://127.0.0.1:11434"
 embedding_model_name = "ollama"
-llm_name = "llama2"
+llm_name = "phi"
 
 if embedding_model_name == "ollama":
     embeddings = OllamaEmbeddings(
-        base_url="http://host.docker.internal:11434", model="llama2"
+        base_url=ollama_base_url, model=llm_name
     )
     dimension = 4096
 else:
@@ -29,7 +30,7 @@ else:
 
 llm = ChatOllama(
         temperature=0,
-        base_url="http://host.docker.internal:11434",
+        base_url=ollama_base_url,
         model=llm_name,
         streaming=True,
         # seed=2,
@@ -50,13 +51,55 @@ chat_prompt = ChatPromptTemplate.from_messages(
 
 chain = chat_prompt | llm
 
-# Streamlit chat prompt
-if prompt := st.chat_input(placeholder="Escribe aqui tu pregunta"):
+# we need some other things to be global, though 
 
-    # Show the user prompt in the chat
-    st.chat_message("user").write(prompt)
-    
-    # Run the chain
-    response = chain.invoke({"question": prompt})
-    
-    st.chat_message("assistant").write(response)
+
+# Create containers for chat history and user input
+response_container = st.container()
+container = st.container()
+
+
+def init_all_things():
+   
+    # Initialize chat history
+    if 'history' not in st.session_state:
+        st.session_state['history'] = []
+
+    # Initialize messages
+    if 'generated' not in st.session_state:
+        st.session_state['generated'] = ["I'm the all knowing useles bot 🤗"]
+
+    if 'past' not in st.session_state:
+        st.session_state['past'] = ["Hey ! 👋"]
+
+
+def show_all_things():
+    # User input form
+    # with container:
+        # with st.form(key='my_form', clear_on_submit=True):
+        #     user_input = st.text_input("Query:", placeholder="Talk to me (:", key='input')
+        #     submit_button = st.form_submit_button(label='Send')
+
+        # if submit_button and user_input:
+    # `st.chat_input()` can't be used inside an `st.expander`, `st.form`, `st.tabs`, `st.columns`, or `st.sidebar`.
+    if user_input := st.chat_input(placeholder="Escribe aqui tu pregunta"):
+        # Run the chain
+        # so here goes all the logic that we should have to make the agent work nicely
+        response = chain.invoke({"question": user_input})
+        st.session_state['past'].append(user_input)
+        st.session_state['generated'].append(response)
+
+    # Display chat history
+    with response_container:
+        for i in range(len(st.session_state['generated'])):
+            message(st.session_state["past"][i], is_user=True, key=str(i) + '_user', avatar_style="big-smile")
+            print(st.session_state["generated"][i])
+            message(str(st.session_state["generated"][i]), key=str(i), avatar_style="thumbs")
+            # message("Is this the real life", key=str(i), avatar_style="thumbs")
+
+
+if __name__ == "__main__":
+    # Initialize all things
+    init_all_things()
+    # Show all things
+    show_all_things()
