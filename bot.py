@@ -12,6 +12,7 @@ from langchain.prompts.chat import (
     SystemMessagePromptTemplate,
     HumanMessagePromptTemplate,
 )
+from langchain.schema.messages import AIMessage
 
 ollama_base_url = "http://127.0.0.1:11434"
 embedding_model_name = "ollama"
@@ -83,6 +84,7 @@ def show_all_things():
         if submit_button and user_input:
             # Run the chain
             response = chain.invoke({"question": user_input})
+            print(type(response), response )
             st.session_state['past'].append(user_input)
             st.session_state['generated'].append(response)
     # `st.chat_input()` can't be used inside an `st.expander`, `st.form`, `st.tabs`, `st.columns`, or `st.sidebar`.
@@ -96,13 +98,16 @@ def show_all_things():
     # Display chat history
     with response_container:
         for i in range(len(st.session_state['generated'])):
-            message(str(st.session_state["generated"][i]), key=str(i), avatar_style="thumbs")
+            ai_msg = st.session_state['generated'][i]
+            if isinstance(ai_msg, AIMessage):
+                ai_msg = ai_msg.content
+            print(type(ai_msg), ai_msg)
+            message(ai_msg, key=str(i), avatar_style="thumbs")
+            # message(str(st.session_state["generated"][i]), key=str(i), avatar_style="thumbs")
             if i < len(st.session_state['past']):
                 message(st.session_state["past"][i], is_user=True, key=str(i) + '_user', avatar_style="big-smile")
 
 
 if __name__ == "__main__":
-    # Initialize all things
     init_all_things()
-    # Show all things
     show_all_things()
