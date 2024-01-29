@@ -70,32 +70,35 @@ def init_all_things():
         st.session_state['generated'] = ["I'm the all knowing useles bot 🤗"]
 
     if 'past' not in st.session_state:
-        st.session_state['past'] = ["Hey ! 👋"]
+        st.session_state['past'] = []
 
 
 def show_all_things():
     # User input form
-    # with container:
-        # with st.form(key='my_form', clear_on_submit=True):
-        #     user_input = st.text_input("Query:", placeholder="Talk to me (:", key='input')
-        #     submit_button = st.form_submit_button(label='Send')
+    with container:
+        with st.form(key='my_form', clear_on_submit=True):
+            user_input = st.text_input("Query:", placeholder="Talk to me (:", key='input')
+            submit_button = st.form_submit_button(label='Send')
 
-        # if submit_button and user_input:
+        if submit_button and user_input:
+            # Run the chain
+            response = chain.invoke({"question": user_input})
+            st.session_state['past'].append(user_input)
+            st.session_state['generated'].append(response)
     # `st.chat_input()` can't be used inside an `st.expander`, `st.form`, `st.tabs`, `st.columns`, or `st.sidebar`.
-    if user_input := st.chat_input(placeholder="Escribe aqui tu pregunta"):
-        # Run the chain
-        # so here goes all the logic that we should have to make the agent work nicely
-        response = chain.invoke({"question": user_input})
-        st.session_state['past'].append(user_input)
-        st.session_state['generated'].append(response)
+    # if user_input := st.chat_input(placeholder="Escribe aqui tu pregunta"):
+    #     # Run the chain
+    #     # so here goes all the logic that we should have to make the agent work nicely
+    #     response = chain.invoke({"question": user_input})
+    #     st.session_state['past'].append(user_input)
+    #     st.session_state['generated'].append(response)
 
     # Display chat history
     with response_container:
         for i in range(len(st.session_state['generated'])):
-            message(st.session_state["past"][i], is_user=True, key=str(i) + '_user', avatar_style="big-smile")
-            print(st.session_state["generated"][i])
             message(str(st.session_state["generated"][i]), key=str(i), avatar_style="thumbs")
-            # message("Is this the real life", key=str(i), avatar_style="thumbs")
+            if i < len(st.session_state['past']):
+                message(st.session_state["past"][i], is_user=True, key=str(i) + '_user', avatar_style="big-smile")
 
 
 if __name__ == "__main__":
