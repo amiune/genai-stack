@@ -1,6 +1,8 @@
 import os
 import streamlit as st
 from streamlit_chat import message
+from streamlit_extras.colored_header import colored_header
+from streamlit_extras.add_vertical_space import add_vertical_space
 
 from langchain.embeddings import (
     OllamaEmbeddings,
@@ -53,7 +55,8 @@ chat_prompt = ChatPromptTemplate.from_messages(
 chain = chat_prompt | llm
 
 # we need some other things to be global, though 
-
+# this one must go first
+st.set_page_config(page_title="Searchable")
 
 # Create containers for chat history and user input
 response_container = st.container()
@@ -61,7 +64,7 @@ container = st.container()
 
 
 def init_all_things():
-   
+    
     # Initialize chat history
     if 'history' not in st.session_state:
         st.session_state['history'] = []
@@ -75,10 +78,21 @@ def init_all_things():
 
 
 def show_all_things():
+    # sidebar
+    with st.sidebar:
+        st.title('Searchable')
+        # some other things here that we might want to add
+        st.markdown('''
+        ## About
+        LLM + RAG powered search engine
+        ''')
+        add_vertical_space(5)
+        st.write('Made with ❤️ by [searchable](https://github.com/leomrocha/searchable)')
+
     # User input form
     with container:
-        with st.form(key='my_form', clear_on_submit=True):
-            user_input = st.text_input("Query:", placeholder="Talk to me (:", key='input')
+        with st.form(key='chat-input', clear_on_submit=True):
+            user_input = st.text_input("Query:", placeholder="... (:", key='input')
             submit_button = st.form_submit_button(label='Send')
 
         if submit_button and user_input:
@@ -101,9 +115,8 @@ def show_all_things():
             ai_msg = st.session_state['generated'][i]
             if isinstance(ai_msg, AIMessage):
                 ai_msg = ai_msg.content
-            print(type(ai_msg), ai_msg)
+            # print(type(ai_msg), ai_msg)
             message(ai_msg, key=str(i), avatar_style="thumbs")
-            # message(str(st.session_state["generated"][i]), key=str(i), avatar_style="thumbs")
             if i < len(st.session_state['past']):
                 message(st.session_state["past"][i], is_user=True, key=str(i) + '_user', avatar_style="big-smile")
 
