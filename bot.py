@@ -56,7 +56,9 @@ chain = chat_prompt | llm
 
 # we need some other things to be global, though 
 # this one must go first
-st.set_page_config(page_title="Searchable")
+st.set_page_config(page_title="Searchable",
+                   layout="wide",
+                   initial_sidebar_state="expanded")
 
 # Create containers for chat history and user input
 response_container = st.container()
