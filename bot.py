@@ -59,24 +59,31 @@ chain = chat_prompt | llm
 st.set_page_config(page_title="Searchable",
                    layout="wide",
                    initial_sidebar_state="expanded")
+# columns
+
+# col1_sidebar, col2_chat, col3_extras = st.columns([0.1, 0.5, 0.4])
+col2_chat, col3_extras = st.columns([0.6, 0.4])
 
 # Create containers for chat history and user input
 response_container = st.container()
-container = st.container()
-
+# container = st.container()
+search_results_container = st.container()
 
 def init_all_things():
     
     # Initialize chat history
     if 'history' not in st.session_state:
         st.session_state['history'] = []
-
+    # hessitating between having a single chat history with dicts {user:['user', ''], content: "this is the content"}
     # Initialize messages
     if 'generated' not in st.session_state:
         st.session_state['generated'] = ["I'm the all knowing useles bot 🤗"]
 
     if 'past' not in st.session_state:
         st.session_state['past'] = []
+
+    if "search_results" not in st.session_state:
+        st.session_state["search_results"] = [] 
 
 
 def show_all_things():
@@ -92,27 +99,29 @@ def show_all_things():
         st.write('Made with ❤️ by [searchable](https://github.com/leomrocha/searchable)')
 
     # User input form
-    with container:
-        with st.form(key='chat-input', clear_on_submit=True):
-            user_input = st.text_input("Query:", placeholder="... (:", key='input')
-            submit_button = st.form_submit_button(label='Send')
+    # with container:
+    #     with st.form(key='chat-input', clear_on_submit=True):
+    #         user_input = st.text_input("Query:", placeholder="... (:", key='input')
+    #         submit_button = st.form_submit_button(label='Send')
 
-        if submit_button and user_input:
-            # Run the chain
-            response = chain.invoke({"question": user_input})
-            print(type(response), response )
-            st.session_state['past'].append(user_input)
-            st.session_state['generated'].append(response)
+    #     if submit_button and user_input:
+    #         # Run the chain
+    #         response = chain.invoke({"question": user_input})
+    #         print(type(response), response )
+    #         st.session_state['past'].append(user_input)
+    #         st.session_state['generated'].append(response)
     # `st.chat_input()` can't be used inside an `st.expander`, `st.form`, `st.tabs`, `st.columns`, or `st.sidebar`.
-    # if user_input := st.chat_input(placeholder="Escribe aqui tu pregunta"):
-    #     # Run the chain
-    #     # so here goes all the logic that we should have to make the agent work nicely
-    #     response = chain.invoke({"question": user_input})
-    #     st.session_state['past'].append(user_input)
-    #     st.session_state['generated'].append(response)
-
-    # Display chat history
-    with response_container:
+    if user_input := st.chat_input(placeholder="Escribe aqui tu pregunta"):
+        # Run the chain
+        # so here goes all the logic that we should have to make the agent work nicely
+        response = chain.invoke({"question": user_input})
+        st.session_state['past'].append(user_input)
+        st.session_state['generated'].append(response)
+    with col2_chat:
+        st.markdown("**Chat History**")
+        st.markdown("---")
+        # Display chat history
+        # with response_container:
         for i in range(len(st.session_state['generated'])):
             ai_msg = st.session_state['generated'][i]
             if isinstance(ai_msg, AIMessage):
@@ -121,6 +130,13 @@ def show_all_things():
             message(ai_msg, key=str(i), avatar_style="thumbs")
             if i < len(st.session_state['past']):
                 message(st.session_state["past"][i], is_user=True, key=str(i) + '_user', avatar_style="big-smile")
+    with col3_extras:
+        # with search_results_container:
+        st.markdown("**Search results**")
+        st.markdown("---")
+        # search res
+        for sr in st.session_state["search_results"]:
+            st.write(sr)
 
 
 if __name__ == "__main__":
