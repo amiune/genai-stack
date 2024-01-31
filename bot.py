@@ -127,8 +127,14 @@ def show_all_things():
             if isinstance(ai_msg, AIMessage):
                 ai_msg = ai_msg.content
             # print(type(ai_msg), ai_msg)
+            # this makes all messages appear as coming from the left
+            # with st.chat_message("assistant"):
+            #     st.write(ai_msg)
+            # while this makes messages appear one from the left and one from the right, as we want it to
             message(ai_msg, key=str(i), avatar_style="thumbs")
             if i < len(st.session_state['past']):
+                # with st.chat_message("user"):
+                #     st.write(st.session_state['past'][i])
                 message(st.session_state["past"][i], is_user=True, key=str(i) + '_user', avatar_style="big-smile")
     with col3_extras:
         # with search_results_container:
@@ -136,6 +142,7 @@ def show_all_things():
         st.markdown("---")
         # search res
         for sr in st.session_state["search_results"]:
+            # do create a container for each result
             st.write(sr)
 
 
