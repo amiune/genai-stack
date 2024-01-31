@@ -56,13 +56,11 @@ services:
     networks:
       - net      
     healthcheck:
-      test: ["CMD", "weaviate", "ping"]
-      #test: ["CMD", "curl", "-f", "http://localhost:8080/v1/.well-known/ready"]
-      #test: wget --no-verbose --tries=3 --spider http://weaviate:8080/v1/.well-known/ready || exit 1
-      interval: 1m
-      timeout: 10s
+      test: wget --no-verbose --tries=3 --spider http://localhost:8080/v1/.well-known/ready || exit 1
+      interval: 5s
+      timeout: 30s
       retries: 5
-      start_period: 30s
+      start_period: 10s
 
   bot:
     build:
@@ -77,8 +75,8 @@ services:
     networks:
       - net
     depends_on:
-      #weaviate:
-        #condition: service_healthy
+      weaviate:
+        condition: service_healthy
       pull-model:
         condition: service_completed_successfully
     x-develop:
