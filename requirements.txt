@@ -3,6 +3,8 @@ wikipedia
 tiktoken
 weaviate-client==4.4b9
 streamlit
+streamlit_chat
+streamlit_extras
 sentence_transformers==2.2.2
 Pillow
 fastapi

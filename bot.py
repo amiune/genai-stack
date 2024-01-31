@@ -16,11 +16,14 @@ from langchain.prompts.chat import (
 
 #client = weaviate.connect_to_local()
 
+# weaviate_host = os.getenv("WEAVIATE_HOST", "localhost")
+weaviate_host = "weaviate"
+
 client = weaviate.connect_to_custom(
-    http_host="weaviate",
+    http_host=weaviate_host,
     http_port=8080,
     http_secure=False,
-    grpc_host="weaviate",
+    grpc_host=weaviate_host,
     grpc_port=50051,
     grpc_secure=False,
 )
@@ -39,6 +42,7 @@ questions = client.collections.create(
 )
 
 
+# ollama_base_url = os.getenv("OLLAMA_URL", "http://localhost:11434")
 ollama_base_url = "http://host.docker.internal:11434"
 embedding_model_name = "ollama"
 llm_name = "llama2"
@@ -46,7 +50,7 @@ llm_name = "llama2"
 if embedding_model_name == "ollama":
     #https://python.langchain.com/docs/integrations/text_embedding/ollama
     embeddings = OllamaEmbeddings(
-        base_url="http://host.docker.internal:11434", model="llama2"
+        base_url=ollama_base_url, model=llm_name
     )
     dimension = 4096
 else:
@@ -76,7 +80,7 @@ question2_uuid = questions.data.insert(
 
 llm = ChatOllama(
         temperature=0,
-        base_url="http://host.docker.internal:11434",
+        base_url=ollama_base_url,
         model=llm_name,
         streaming=True,
         # seed=2,
