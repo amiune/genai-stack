@@ -14,11 +14,8 @@ from langchain.prompts.chat import (
     HumanMessagePromptTemplate,
 )
 
-#client = weaviate.connect_to_local()
-
-# weaviate_host = os.getenv("WEAVIATE_HOST", "localhost")
+# connect to local weaviate db 
 weaviate_host = "weaviate"
-
 client = weaviate.connect_to_custom(
     http_host=weaviate_host,
     http_port=8080,
@@ -28,9 +25,14 @@ client = weaviate.connect_to_custom(
     grpc_secure=False,
 )
 
+# connecto to weaviate cluster
+#client = weaviate.connect_to_wcs(
+#    cluster_url = os.getenv("WEAVIATE_URL"),
+#    auth_credentials = weaviate.AuthApiKey(os.getenv("WEAVIATE_API_KEY"))
+#)
+
 if client.collections.exists("Question"):
     client.collections.delete(name="Question")
-    #questions = client.collections.get("Question")
 
 #https://weaviate.io/developers/weaviate/starter-guides/custom-vectors
 questions = client.collections.create(
@@ -41,10 +43,9 @@ questions = client.collections.create(
     ),
 )
 
-
 # ollama_base_url = os.getenv("OLLAMA_URL", "http://localhost:11434")
 ollama_base_url = "http://host.docker.internal:11434"
-embedding_model_name = "ollama"
+embedding_model_name = "sentence-bert"
 llm_name = "llama2"
 
 if embedding_model_name == "ollama":
@@ -55,7 +56,7 @@ if embedding_model_name == "ollama":
     dimension = 4096
 else:
     embeddings = SentenceTransformerEmbeddings(
-        model_name="all-MiniLM-L6-v2", cache_folder="/embedding_model"
+        model_name="dccuchile/bert-base-spanish-wwm-cased", cache_folder="/embedding_model"
     )
     dimension = 384
 

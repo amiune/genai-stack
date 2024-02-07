@@ -7,15 +7,13 @@ Available variables:
 | Variable Name          | Default value                      | Description                                                             |
 |------------------------|------------------------------------|-------------------------------------------------------------------------|
 | OLLAMA_BASE_URL        | http://host.docker.internal:11434  | REQUIRED - URL to Ollama LLM API                                        |   
-| WEAVIATE_URI           | weaviate://database:7687           | REQUIRED - URL to weaviate database                                     |
-| WEAVIATE_USERNAME      | weaviate                           | REQUIRED - Username for weaviate database                               |
-| WEAVIATE_PASSWORD      | password                           | REQUIRED - Password for weaviate database                               |
+| WEAVIATE_URL           | weaviate cluster url               | OPTIONAL - URL to weaviate cluster                                      |
+| WEAVIATE_API_KEY       | weaviate token                     | OPTIONAL - Weaviate token                                               |
 | LLM                    | llama2                             | REQUIRED - Can be any Ollama model tag                                  |
 | EMBEDDING_MODEL        | sentence_transformer               | REQUIRED - Can be sentence_transformer or ollama                        |
 
 ## LLM Configuration
 MacOS and Linux users can use any LLM that's available via Ollama. Check the "tags" section under the model page you want to use on https://ollama.ai/library and write the tag for the value of the environment variable `LLM=` in the `.env` file.
-All platforms can use GPT-3.5-turbo and GPT-4 (bring your own API keys for OpenAI models).
 
 **MacOS**
 Install [Ollama](https://ollama.ai) on MacOS and start it before running `docker compose up`.
